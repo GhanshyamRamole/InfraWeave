@@ -1,0 +1,36 @@
+---
+- name: Setup Docker and Deploy Web Containers
+  hosts: all
+  become: yes
+  vars:
+    # Mapping specific images to specific hosts
+    site_mapping:
+      node1: "hackwithabhi/painterrepo"
+      node2: "hackwithabhi/tourist2025"
+      node3: "hackwithabhi/jewellery:v1"
+
+  tasks:
+    - name: Install Docker
+      yum:
+        name: docker
+        state: present
+
+    - name: Ensure Docker is started and enabled
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Ensure Python Docker library is installed
+      pip:
+        name: docker
+        state: present
+
+    - name: Deploy specific website container
+      community.docker.docker_container:
+        name: web_container
+        image: "{{ site_mapping[inventory_hostname] }}"
+        state: started
+        restart_policy: always
+        published_ports:
+          - "80:80"
