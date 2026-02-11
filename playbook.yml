@@ -5,9 +5,9 @@
   vars:
     # Mapping specific images to specific hosts
     site_mapping:
-      node1: "hackwithabhi/painterrepo"
-      node2: "hackwithabhi/tourist2025"
-      node3: "hackwithabhi/jewellery:v1"
+      node1: "ghanshyamramole/painterrepo"
+      node2: "ghanshyamramole/tourist2025"
+      node3: "ghanshyamramole/jewellery"
 
   tasks:
     - name: Install Docker
