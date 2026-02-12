@@ -87,21 +87,25 @@ resource "aws_instance" "ansible" {
     timeout     = "2m"
   }
 
-  provisioner "remote-exec" {
-    inline = [
-      for node in aws_instance.nodes : 
-      "echo '${node.private_ip} ${node.tags["Name"]}' | sudo tee -a /etc/hosts"
-    ]
+   # Upload the ansible folder
+  provisioner "file" {
+    source      = "${path.module}/playbook.yml" 
+    destination = "/home/itadmin/punepro/"    
   }
 
-  # Handle File Migration for itsadmin
   provisioner "remote-exec" {
     inline = [
-      "echo 'Starting directory wait loop...'",
-      "timeout 300s bash -c 'while ! [ -d /home/itadmin/punepro ]; do sleep 10; done'",
-      "if [ -d /home/ec2-user/InfraWeave/playbook.yml ]; then sudo mv /home/ec2-user/InfraWeave/playbook.yml /home/itadmin/punepro/playbook.yml; fi",
-      "sudo chown -R itadmin:itadmin /home/itadmin/punepro/playbook.yml",
-      "echo 'Migration Complete'"
+       for node in aws_instance.nodes : 
+      "echo '${node.private_ip} ${node.tags["Name"]}' | sudo tee -a /etc/hosts" 
+
+      # 1. Wait for the directory and the file upload to complete
+      "while [ ! -f /home/itsadmin/default/playbook.yml ]; do echo 'Waiting for playbook upload...'; sleep 5; done",
+
+      # 2. Fix ownership (Ensure itsadmin owns the files uploaded via SSH)
+      "sudo chown -R itadmin:itadmin /home/itsadmin/punepro/playbook.yml",
+
+      # 3. Execute the Ansible Playbook
+      "cd /home/itadmin/punepro/ && ansible-playbook playbook.yml"
     ]
   }
 
