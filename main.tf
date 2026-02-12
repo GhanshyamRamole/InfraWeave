@@ -81,18 +81,39 @@ resource "aws_instance" "ansible" {
 
   connection {
     type        = "ssh"
-    user        = "root" 
+    user        = "ec2-user" 
     password      = var.passwd
     host        = self.public_ip
     timeout     = "2m"
   }
+  
+
+  # migrate Ansible files to Ansible Master 
+  provisioner "file" {
+    source      = "${path.module}/playbook.yml" 
+    destination = "/tmp/playbook.yml"    
+  }
 
   provisioner "remote-exec" {
-    inline = [
-      for node in aws_instance.nodes : 
-      "echo '${node.private_ip} ${node.tags["Name"]}' | sudo tee -a /etc/hosts"
-    ]
+    inline = concat(
+      # Update /etc/hosts for all worker-nodes
+      [for node in aws_instance.nodes : "echo '${node.private_ip} ${node.tags["Name"]}' | sudo tee -a /etc/hosts"],
+      
+      [
+        # Wait until the user and directory are created by ansible.sh
+        "echo 'Waiting for bootstrap script to create itadmin and directory...'",
+        "timeout 300s bash -c 'while ! [ -d /home/itadmin/punepro ]; do sleep 10; done'",
+        
+        # Now move the file and set permissions
+        "sudo mv /tmp/playbook.yml /home/itadmin/punepro/playbook.yml",
+        "sudo chown -R itadmin:itadmin /home/itadmin/punepro/",
+        
+        # Execute the playbook as the itadmin user
+        "cd /home/itadmin/punepro/ && sudo -u itadmin ansible-playbook playbook.yml"
+      ]
+    )
   }
+
 
   tags = { Name = "ansible-server" }
 }
