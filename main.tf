@@ -87,29 +87,12 @@ resource "aws_instance" "ansible" {
     timeout     = "2m"
   }
 
-   # Upload the ansible folder
-  provisioner "file" {
-    source      = "${path.module}/playbook.yml" 
-    destination = "/home/itadmin/punepro/"    
-  }
-
   provisioner "remote-exec" {
     inline = [
-       %{ for node in aws_instance.nodes ~}
-      "echo '${node.private_ip} ${node.tags["Name"]}' | sudo tee -a /etc/hosts",
-      %{ endfor ~}
-
-      # 1. Wait for the directory and the file upload to complete
-      "while [ ! -f /home/itsadmin/default/playbook.yml ]; do echo 'Waiting for playbook upload...'; sleep 5; done",
-
-      # 2. Fix ownership (Ensure itsadmin owns the files uploaded via SSH)
-      "sudo chown -R itadmin:itadmin /home/itsadmin/punepro/playbook.yml",
-
-      # 3. Execute the Ansible Playbook
-      "cd /home/itadmin/punepro/ && ansible-playbook playbook.yml"
+      for node in aws_instance.nodes : 
+      "echo '${node.private_ip} ${node.tags["Name"]}' | sudo tee -a /etc/hosts"
     ]
   }
-
 
   tags = { Name = "ansible-server" }
 }
