@@ -95,8 +95,9 @@ resource "aws_instance" "ansible" {
 
   provisioner "remote-exec" {
     inline = [
-       for node in aws_instance.nodes : 
-      "echo '${node.private_ip} ${node.tags["Name"]}' | sudo tee -a /etc/hosts" 
+       %{ for node in aws_instance.nodes ~}
+      "echo '${node.private_ip} ${node.tags["Name"]}' | sudo tee -a /etc/hosts",
+      %{ endfor ~}
 
       # 1. Wait for the directory and the file upload to complete
       "while [ ! -f /home/itsadmin/default/playbook.yml ]; do echo 'Waiting for playbook upload...'; sleep 5; done",
