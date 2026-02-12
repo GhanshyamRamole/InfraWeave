@@ -21,11 +21,6 @@
         state: started
         enabled: yes
 
-    - name: Ensure Python Docker library is installed
-      pip:
-        name: docker
-        state: present
-
     - name: Deploy specific website container
       community.docker.docker_container:
         name: web_container

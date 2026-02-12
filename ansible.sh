@@ -1,7 +1,7 @@
 #!/bin/bash
 useradd itadmin
 echo 111 | passwd --stdin itadmin
-echo 111 | passwd --stdin root
+echo 111 | passwd --stdin ec2-user
 echo "itadmin  ALL=(ALL)   NOPASSWD: ALL" >> /etc/sudoers
 sed 's/PasswordAuthentication no/PasswordAuthentication yes/' -i /etc/ssh/sshd_config
 echo PermitRootLogin yes >> /etc/ssh/sshd_config
